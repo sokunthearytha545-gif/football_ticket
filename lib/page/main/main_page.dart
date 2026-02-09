@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:football_ticket/page/main/home/home_page.dart';
+import 'package:football_ticket/page/main/my_ticket/my_ticket_page.dart';
+import 'package:football_ticket/page/main/profile/profile_page.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -24,56 +26,15 @@ class _MainPageState extends State<MainPage> {
     super.dispose();
   }
 
-  final List<Widget> _pages = const [HomePage(), HomePage(), HomePage()];
+  final List<Widget> _pages = const [
+    HomePage(),
+    MyTicketScreen(),
+    ProfileScreen(),
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [const Color(0xFF8B4513), const Color(0xFFA0522D)],
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.2),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.menu, color: Colors.white, size: 28),
-                onPressed: () {},
-              ),
-              const SizedBox(width: 8),
-              const Text(
-                'FOOTBALL EVENTS',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  letterSpacing: 1.2,
-                  shadows: [
-                    Shadow(
-                      color: Colors.black45,
-                      offset: Offset(1, 1),
-                      blurRadius: 2,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-
       body: PageView.builder(
         controller: _pageController,
         itemCount: _pages.length,
