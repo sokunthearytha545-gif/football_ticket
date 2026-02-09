@@ -20,6 +20,48 @@ class PaymentPage extends StatefulWidget {
 
 class _PaymentPageState extends State<PaymentPage> {
   String selectedBank = 'ABA Bank';
+  final _formKey = GlobalKey<FormState>();
+  final _accountNameController = TextEditingController();
+  final _accountNumberController = TextEditingController();
+  final _transactionRefController = TextEditingController();
+
+  @override
+  void dispose() {
+    _accountNameController.dispose();
+    _accountNumberController.dispose();
+    _transactionRefController.dispose();
+    super.dispose();
+  }
+
+  String? _validateAccountName(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Please enter account name';
+    }
+    if (value.length < 3) {
+      return 'Account name must be at least 3 characters';
+    }
+    return null;
+  }
+
+  String? _validateAccountNumber(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Please enter account number';
+    }
+    if (value.length < 8) {
+      return 'Account number must be at least 8 digits';
+    }
+    return null;
+  }
+
+  String? _validateTransactionRef(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Please enter transaction reference number';
+    }
+    if (value.length < 6) {
+      return 'Transaction reference must be at least 6 characters';
+    }
+    return null;
+  }
 
   final List<Map<String, dynamic>> banks = [
     {
@@ -76,97 +118,146 @@ class _PaymentPageState extends State<PaymentPage> {
             child: SingleChildScrollView(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 10,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Order Summary',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.grey.shade700,
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 10,
+                              offset: const Offset(0, 2),
                             ),
-                          ),
-                          const SizedBox(height: 12),
-                          const Text(
-                            'Football Match',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            widget.dateTime,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey.shade700,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Tickets: ${widget.qty} * \$${widget.ticketPrice}',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey.shade700,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: Text(
-                              'Total: \$${widget.totalPrice.toStringAsFixed(2)}',
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Order Summary',
                               style: TextStyle(
                                 fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.grey.shade800,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey.shade700,
                               ),
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 12),
+                            const Text(
+                              'Football Match',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              widget.dateTime,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey.shade700,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Tickets: ${widget.qty} * \$${widget.ticketPrice}',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey.shade700,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: Text(
+                                'Total: \$${widget.totalPrice.toStringAsFixed(2)}',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey.shade800,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
 
-                    const SizedBox(height: 24),
+                      const SizedBox(height: 24),
 
-                    const Text(
-                      'Select Payment Method',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                      const Text(
+                        'Select Payment Method',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
                       ),
-                    ),
 
-                    const SizedBox(height: 16),
+                      const SizedBox(height: 16),
 
-                    ...banks.map(
-                      (bank) => _buildBankOption(
-                        name: bank['name'],
-                        backgroundColor: bank['color'],
-                        textColor: bank['textColor'],
-                        isSelected: selectedBank == bank['name'],
+                      ...banks.map(
+                        (bank) => _buildBankOption(
+                          name: bank['name'],
+                          backgroundColor: bank['color'],
+                          textColor: bank['textColor'],
+                          isSelected: selectedBank == bank['name'],
+                        ),
                       ),
-                    ),
-                  ],
+
+                      const SizedBox(height: 24),
+
+                      const Text(
+                        'Payment Details',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Account Name Field
+                      _buildInputField(
+                        label: 'Account Name',
+                        controller: _accountNameController,
+                        validator: _validateAccountName,
+                        hint: 'Enter account holder name',
+                        keyboardType: TextInputType.name,
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Account Number Field
+                      _buildInputField(
+                        label: 'Account Number',
+                        controller: _accountNumberController,
+                        validator: _validateAccountNumber,
+                        hint: 'Enter account number',
+                        keyboardType: TextInputType.number,
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Transaction Reference Number Field
+                      _buildInputField(
+                        label: 'Transaction Reference Number',
+                        controller: _transactionRefController,
+                        validator: _validateTransactionRef,
+                        hint: 'Enter transaction reference',
+                        keyboardType: TextInputType.text,
+                      ),
+
+                      const SizedBox(height: 24),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -179,65 +270,71 @@ class _PaymentPageState extends State<PaymentPage> {
               height: 56,
               child: ElevatedButton(
                 onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      title: const Text('Confirm Payment'),
-                      content: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('Football Match'),
-                          const SizedBox(height: 8),
-                          const Text('2 tickets × \$10'),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'Total: \$20',
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                  if (_formKey.currentState!.validate()) {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        title: const Text('Confirm Payment'),
+                        content: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('Football Match'),
+                            const SizedBox(height: 8),
+                            Text(
+                              '${widget.qty} tickets × \$${widget.ticketPrice}',
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Total: \$${widget.totalPrice.toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Text('Payment Method: $selectedBank'),
+                            const SizedBox(height: 8),
+                            Text('Account: ${_accountNameController.text}'),
+                            Text('Acc No: ${_accountNumberController.text}'),
+                            Text('Ref: ${_transactionRefController.text}'),
+                          ],
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('Cancel'),
                           ),
-                          const SizedBox(height: 12),
-                          Text('Payment Method: $selectedBank'),
+                          ElevatedButton(
+                            onPressed: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Payment of \$${widget.totalPrice.toStringAsFixed(2)} via $selectedBank successful!',
+                                  ),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                              Navigator.pushAndRemoveUntil(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => MainPage(),
+                                ),
+                                (route) => false,
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF4CAF50),
+                              foregroundColor: Colors.white,
+                            ),
+                            child: const Text('Confirm'),
+                          ),
                         ],
                       ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('Cancel'),
-                        ),
-                        ElevatedButton(
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  'Payment of \$20 via $selectedBank successful!',
-                                ),
-                                backgroundColor: Colors.green,
-                              ),
-                            );
-                            Navigator.pushAndRemoveUntil(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => MainPage(),
-                              ),
-                              (route) => false,
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color.fromARGB(
-                              255,
-                              255,
-                              255,
-                              255,
-                            ),
-                          ),
-                          child: const Text('Confirm'),
-                        ),
-                      ],
-                    ),
-                  );
+                    );
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFFDB747),
@@ -257,6 +354,63 @@ class _PaymentPageState extends State<PaymentPage> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildInputField({
+    required String label,
+    required TextEditingController controller,
+    required String? Function(String?) validator,
+    required String hint,
+    required TextInputType keyboardType,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: TextFormField(
+            controller: controller,
+            validator: validator,
+            keyboardType: keyboardType,
+            style: const TextStyle(fontSize: 16, color: Colors.black87),
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
+              ),
+              errorStyle: const TextStyle(fontSize: 12, height: 0.8),
+            ),
+          ),
+        ),
+      ],
     );
   }
 

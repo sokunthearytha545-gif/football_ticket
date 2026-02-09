@@ -1,33 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:football_ticket/page/login_and_sign_up/login_page.dart';
 import 'package:football_ticket/page/main/main_page.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class SignUpScreen extends StatefulWidget {
+  const SignUpScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<SignUpScreen> createState() => _SignUpScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _SignUpScreenState extends State<SignUpScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _usernameController = TextEditingController();
+  final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
 
   @override
   void dispose() {
-    _usernameController.dispose();
+    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
-  String? _validateUsername(String? value) {
+  String? _validateName(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Please enter your username';
+      return 'Please enter your name';
     }
-    if (value.length < 3) {
-      return 'Username must be at least 3 characters';
+    if (value.length < 2) {
+      return 'Name must be at least 2 characters';
     }
     return null;
   }
@@ -55,15 +58,25 @@ class _LoginScreenState extends State<LoginScreen> {
     return null;
   }
 
-  void _handleLogin() {
+  String? _validateConfirmPassword(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Please confirm your password';
+    }
+    if (value != _passwordController.text) {
+      return 'Passwords do not match';
+    }
+    return null;
+  }
+
+  void _handleSignUp() {
     if (_formKey.currentState!.validate()) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Login successful!'),
+          content: Text('Account created successfully!'),
           backgroundColor: Colors.green,
         ),
       );
-      Navigator.push(
+      Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => MainPage()),
       );
@@ -97,14 +110,19 @@ class _LoginScreenState extends State<LoginScreen> {
                 autovalidateMode: AutovalidateMode.onUnfocus,
                 child: Column(
                   children: [
-                    const SizedBox(height: 80),
+                    const SizedBox(height: 60),
                     const Text(
-                      'Welcome back',
+                      'Create Account',
                       style: TextStyle(
                         fontSize: 32,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Sign up to get started',
+                      style: TextStyle(fontSize: 16, color: Colors.white70),
                     ),
                     const SizedBox(height: 40),
                     Container(
@@ -135,7 +153,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            'Username',
+                            'Full Name',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -144,9 +162,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           const SizedBox(height: 8),
                           _buildTextFormField(
-                            controller: _usernameController,
-                            hint: 'Enter your username',
-                            validator: _validateUsername,
+                            controller: _nameController,
+                            hint: 'Enter your full name',
+                            validator: _validateName,
+                            keyboardType: TextInputType.name,
                           ),
                           const SizedBox(height: 24),
                           const Text(
@@ -180,37 +199,28 @@ class _LoginScreenState extends State<LoginScreen> {
                             isPassword: true,
                             validator: _validatePassword,
                           ),
-                          const SizedBox(height: 12),
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: TextButton(
-                              onPressed: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Forgot password clicked'),
-                                  ),
-                                );
-                              },
-                              style: TextButton.styleFrom(
-                                padding: EdgeInsets.zero,
-                                minimumSize: const Size(0, 0),
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              ),
-                              child: const Text(
-                                'Forget password?',
-                                style: TextStyle(
-                                  color: Color.fromARGB(255, 255, 255, 255),
-                                  fontSize: 14,
-                                ),
-                              ),
+                          const SizedBox(height: 24),
+                          const Text(
+                            'Confirm Password',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
                             ),
                           ),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 8),
+                          _buildTextFormField(
+                            controller: _confirmPasswordController,
+                            hint: 'Confirm your password',
+                            isPassword: true,
+                            validator: _validateConfirmPassword,
+                          ),
+                          const SizedBox(height: 32),
                           SizedBox(
                             width: double.infinity,
                             height: 50,
                             child: ElevatedButton(
-                              onPressed: _handleLogin,
+                              onPressed: _handleSignUp,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFF4A90E2),
                                 foregroundColor: Colors.white,
@@ -220,7 +230,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 elevation: 4,
                               ),
                               child: const Text(
-                                'Login',
+                                'Sign Up',
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w600,
@@ -228,9 +238,47 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
                           ),
+                          const SizedBox(height: 16),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Text(
+                                'Already have an account? ',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => LoginScreen(),
+                                    ),
+                                  );
+                                },
+                                style: TextButton.styleFrom(
+                                  padding: EdgeInsets.zero,
+                                  minimumSize: const Size(0, 0),
+                                  tapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                child: const Text(
+                                  'Login',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ],
                       ),
                     ),
+                    const SizedBox(height: 40),
                   ],
                 ),
               ),
