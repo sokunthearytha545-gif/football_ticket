@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:football_ticket/service/auth_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -545,7 +546,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
+              await AuthService().logout();
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(

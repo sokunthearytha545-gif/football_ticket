@@ -18,8 +18,8 @@ class _HomePageState extends State<HomePage> {
       ticketPrice: 15,
       ticketVipPrice: 30,
       availableTicket: 100,
-      team1: 'Manchester',
-      team2: 'Chelsea',
+      team1: 'manchester',
+      team2: 'chelsea',
       team1VsTeam2: 'Manchester vs Chelsea',
     ),
     MatchModel(
@@ -29,8 +29,8 @@ class _HomePageState extends State<HomePage> {
       ticketPrice: 10,
       ticketVipPrice: 25,
       availableTicket: 150,
-      team1: 'Liverpool',
-      team2: 'Arsenal',
+      team1: 'liverpool',
+      team2: 'arsenal',
       team1VsTeam2: 'Liverpool vs Arsenal',
     ),
     MatchModel(
@@ -40,8 +40,8 @@ class _HomePageState extends State<HomePage> {
       ticketPrice: 20,
       ticketVipPrice: 40,
       availableTicket: 80,
-      team1: 'Real',
-      team2: 'Barcelona',
+      team1: 'real',
+      team2: 'barcelona',
       team1VsTeam2: 'Real Madrid vs Barcelona',
     ),
   ];

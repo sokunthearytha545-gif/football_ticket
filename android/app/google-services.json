@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "79978435586",
+    "project_id": "footballtickket",
+    "storage_bucket": "footballtickket.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:79978435586:android:ccf7ae7471206f64bcc31b",
+        "android_client_info": {
+          "package_name": "com.example.football_ticket"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBmcXPRoCFNZHIDuQUh8pG377nASSBEKPY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

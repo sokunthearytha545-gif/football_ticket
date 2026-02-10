@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:football_ticket/page/login_and_sign_up/sign_up_page.dart';
 import 'package:football_ticket/page/main/main_page.dart';
+import 'package:football_ticket/service/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -44,9 +45,14 @@ class _LoginScreenState extends State<LoginScreen> {
     return null;
   }
 
-  void _handleLogin() {
+  Future<void> _handleLogin() async {
     if (_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      try{
+        await AuthService().login(
+          email: _emailController.text.trim(),
+          password: _passwordController.text.trim(),
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Login successful!'),
           backgroundColor: Colors.green,
@@ -57,6 +63,14 @@ class _LoginScreenState extends State<LoginScreen> {
         MaterialPageRoute(builder: (context) => MainPage()),
         (route) => false,
       );
+      }catch(e){
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 

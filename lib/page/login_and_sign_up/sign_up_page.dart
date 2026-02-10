@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:football_ticket/page/login_and_sign_up/login_page.dart';
 import 'package:football_ticket/page/main/main_page.dart';
+import 'package:football_ticket/service/auth_service.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -68,10 +69,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
     return null;
   }
 
-  void _handleSignUp() {
+  Future<void> _handleSignUp() async {
     if (_formKey.currentState!.validate()) {
+      try{
+        await AuthService().signUp(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+         SnackBar(
           content: Text('Account created successfully!'),
           backgroundColor: Colors.green,
         ),
@@ -80,6 +86,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
         context,
         MaterialPageRoute(builder: (context) => MainPage()),
       );
+      }catch(e){
+        ScaffoldMessenger.of(context).showSnackBar(
+         SnackBar(
+          content: Text(e.toString()),
+          backgroundColor: Colors.red,
+        ),
+      );
+      }
     }
   }
 
