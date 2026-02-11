@@ -12,7 +12,12 @@
           "package_name": "com.example.football_ticket"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "79978435586-5fkklc4steoaigroo55pnmvjnemuuf8t.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBmcXPRoCFNZHIDuQUh8pG377nASSBEKPY"
@@ -20,7 +25,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "79978435586-5fkklc4steoaigroo55pnmvjnemuuf8t.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "79978435586-oc04i32d925ne6386v0170a8hj2pcg34.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.footballTicket"
+              }
+            }
+          ]
         }
       }
     }
