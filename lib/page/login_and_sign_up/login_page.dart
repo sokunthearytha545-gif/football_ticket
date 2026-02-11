@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:football_ticket/page/helper/loading_dailog.dart';
 import 'package:football_ticket/page/login_and_sign_up/sign_up_page.dart';
 import 'package:football_ticket/page/main/main_page.dart';
 import 'package:football_ticket/service/auth_service.dart';
@@ -47,28 +48,28 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _handleLogin() async {
     if (_formKey.currentState!.validate()) {
-      try{
+      try {
+        LoadingDialog.show(context);
         await AuthService().login(
           email: _emailController.text.trim(),
           password: _passwordController.text.trim(),
         );
         ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Login successful!'),
-          backgroundColor: Colors.green,
-        ),
-      );
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => MainPage()),
-        (route) => false,
-      );
-      }catch(e){
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString()),
-            backgroundColor: Colors.red,
+          const SnackBar(
+            content: Text('Login successful!'),
+            backgroundColor: Colors.green,
           ),
+        );
+        LoadingDialog.hide(context);
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => MainPage()),
+          (route) => false,
+        );
+      } catch (e) {
+        LoadingDialog.hide(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
         );
       }
     }

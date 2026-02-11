@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:football_ticket/check_auth.dart';
 import 'package:football_ticket/service/auth_service.dart';
+import 'package:football_ticket/service/user_data_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -11,6 +13,26 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   bool notificationsEnabled = true;
   bool emailNotifications = false;
+  String? name;
+  String? email;
+  String? phone;
+
+  @override
+  void initState() {
+    super.initState();
+    loadUserData();
+  }
+
+  Future<void> loadUserData() async {
+    final data = await UserDataService().getUserData();
+    if (data != null) {
+      setState(() {
+        name = data['name'] ?? 'No Name';
+        email = data['email'] ?? 'No Email';
+        phone = data['phone'] ?? 'No Phone';
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -123,8 +145,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   const SizedBox(height: 16),
 
-                  const Text(
-                    'John Doe',
+                  Text(
+                    name ?? 'No Name',
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -135,7 +157,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SizedBox(height: 4),
 
                   Text(
-                    'john.doe@example.com',
+                    email ?? 'No Email',
                     style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
                   ),
 
@@ -432,9 +454,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _showEditProfileDialog(BuildContext context) {
-    final nameController = TextEditingController(text: 'John Doe');
-    final emailController = TextEditingController(text: 'john.doe@example.com');
-    final phoneController = TextEditingController(text: '+1 234 567 8900');
+    final nameController = TextEditingController(text: name ?? 'No Name');
+    final emailController = TextEditingController(text: email ?? 'No Email');
+    final phoneController = TextEditingController(text: phone ?? 'No Phone');
 
     showDialog(
       context: context,
@@ -548,7 +570,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ElevatedButton(
             onPressed: () async {
               await AuthService().logout();
-              Navigator.pop(context);
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => CheckAuth()),
+                (route) => false,
+              );
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Logged out successfully!'),
@@ -559,7 +585,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red.shade600,
             ),
-            child: const Text('Logout'),
+            child: const Text('Logout', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:football_ticket/page/helper/loading_dailog.dart';
 import 'package:football_ticket/page/login_and_sign_up/login_page.dart';
 import 'package:football_ticket/page/main/main_page.dart';
 import 'package:football_ticket/service/auth_service.dart';
@@ -15,6 +16,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
   @override
@@ -33,6 +35,23 @@ class _SignUpScreenState extends State<SignUpScreen> {
     if (value.length < 2) {
       return 'Name must be at least 2 characters';
     }
+    return null;
+  }
+
+  String? _validatePhone(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Please enter your phone number';
+    }
+    final trimmedValue = value.replaceAll(RegExp(r'\s+|-'), '');
+
+    if (!RegExp(r'^\d+$').hasMatch(trimmedValue)) {
+      return 'Phone number must contain only digits';
+    }
+
+    if (trimmedValue.length < 8 || trimmedValue.length > 15) {
+      return 'Phone number must be between 8 and 15 digits';
+    }
+
     return null;
   }
 
@@ -71,28 +90,30 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   Future<void> _handleSignUp() async {
     if (_formKey.currentState!.validate()) {
-      try{
+      try {
+        LoadingDialog.show(context);
         await AuthService().signUp(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-      );
-      ScaffoldMessenger.of(context).showSnackBar(
-         SnackBar(
-          content: Text('Account created successfully!'),
-          backgroundColor: Colors.green,
-        ),
-      );
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => MainPage()),
-      );
-      }catch(e){
+          email: _emailController.text.trim(),
+          password: _passwordController.text.trim(),
+          name: _nameController.text.trim(),
+          phone: _phoneController.text.trim(),
+        );
         ScaffoldMessenger.of(context).showSnackBar(
-         SnackBar(
-          content: Text(e.toString()),
-          backgroundColor: Colors.red,
-        ),
-      );
+          SnackBar(
+            content: Text('Account created successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        LoadingDialog.hide(context);
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => MainPage()),
+        );
+      } catch (e) {
+        LoadingDialog.hide(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+        );
       }
     }
   }
@@ -181,6 +202,23 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             validator: _validateName,
                             keyboardType: TextInputType.name,
                           ),
+                          const SizedBox(height: 24),
+                          const Text(
+                            'Phone Number',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          _buildTextFormField(
+                            controller: _phoneController,
+                            hint: 'Enter your phone number',
+                            validator: _validatePhone,
+                            keyboardType: TextInputType.phone,
+                          ),
+
                           const SizedBox(height: 24),
                           const Text(
                             'Email',
