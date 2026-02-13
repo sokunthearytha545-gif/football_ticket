@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:football_ticket/page/helper/loading_dailog.dart';
 import 'package:football_ticket/page/login_and_sign_up/login_page.dart';
@@ -114,6 +116,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
         );
+        log('Sign up error: $e');
       }
     }
   }

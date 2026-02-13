@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -28,8 +30,14 @@ final FirebaseFirestore _firestore = FirebaseFirestore.instance;
     }
     return user;
   } on FirebaseAuthException catch (e) {
+    log('Sign up error: ${e.message}');
     throw e.message ?? 'Sign up failed';
+  } catch (e, stack) {
+    log('Sign up error: $e');
+    log('Stack: $stack');
+    rethrow;
   }
+
 }
 
 
