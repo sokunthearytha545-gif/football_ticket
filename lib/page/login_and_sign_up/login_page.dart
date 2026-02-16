@@ -15,6 +15,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool isVisible = false;
 
   @override
   void dispose() {
@@ -167,7 +168,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           _buildTextFormField(
                             controller: _passwordController,
                             hint: 'Enter your password',
-                            isPassword: true,
+                            isPassword: isVisible,
                             validator: _validatePassword,
                           ),
                           const SizedBox(height: 12),
@@ -285,9 +286,29 @@ class _LoginScreenState extends State<LoginScreen> {
         controller: controller,
         obscureText: isPassword,
         keyboardType: keyboardType,
+
         style: const TextStyle(color: Colors.white, fontSize: 16),
         validator: validator,
         decoration: InputDecoration(
+          suffixIcon: hint == "Enter your password"
+              ? !isVisible
+                    ? IconButton(
+                        onPressed: () {
+                          setState(() {
+                            isVisible = !isVisible;
+                          });
+                        },
+                        icon: Icon(Icons.visibility, color: Colors.white),
+                      )
+                    : IconButton(
+                        onPressed: () {
+                          setState(() {
+                            isVisible = !isVisible;
+                          });
+                        },
+                        icon: Icon(Icons.visibility_off, color: Colors.white),
+                      )
+              : null,
           hintText: hint,
           hintStyle: TextStyle(
             color: Colors.white.withOpacity(0.5),

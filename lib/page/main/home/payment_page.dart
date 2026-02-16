@@ -1,17 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:football_ticket/model/match_model.dart';
+import 'package:football_ticket/model/ticket_model.dart';
+import 'package:football_ticket/page/helper/loading_dailog.dart';
 import 'package:football_ticket/page/main/main_page.dart';
+import 'package:football_ticket/service/auth_service.dart';
+import 'package:football_ticket/service/tickets_service.dart';
 
+// ignore: must_be_immutable
 class PaymentPage extends StatefulWidget {
   final double totalPrice;
   final int qty;
   final double ticketPrice;
   final String dateTime;
-  const PaymentPage({
+  final String ticketType;
+  MatchModel match;
+  PaymentPage({
     super.key,
+    required this.match,
     required this.totalPrice,
     required this.qty,
     required this.ticketPrice,
     required this.dateTime,
+    required this.ticketType,
   });
 
   @override
@@ -80,6 +90,18 @@ class _PaymentPageState extends State<PaymentPage> {
       'textColor': Colors.white,
     },
   ];
+  String generateBookingId() {
+    final now = DateTime.now();
+
+    final day = now.day.toString().padLeft(2, '0');
+    final month = now.month.toString().padLeft(2, '0');
+    final year = now.year.toString();
+    final hour = now.hour.toString().padLeft(2, '0');
+    final minute = now.minute.toString().padLeft(2, '0');
+    final second = now.second.toString().padLeft(2, '0');
+
+    return 'TK$day$month$year$hour$minute$second';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -167,7 +189,7 @@ class _PaymentPageState extends State<PaymentPage> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Tickets: ${widget.qty} * \$${widget.ticketPrice}',
+                              'Tickets: ${widget.ticketType} ${widget.qty} * \$${widget.ticketPrice}',
                               style: TextStyle(
                                 fontSize: 14,
                                 color: Colors.grey.shade700,
@@ -224,7 +246,6 @@ class _PaymentPageState extends State<PaymentPage> {
 
                       const SizedBox(height: 16),
 
-                      // Account Name Field
                       _buildInputField(
                         label: 'Account Name',
                         controller: _accountNameController,
@@ -235,7 +256,6 @@ class _PaymentPageState extends State<PaymentPage> {
 
                       const SizedBox(height: 16),
 
-                      // Account Number Field
                       _buildInputField(
                         label: 'Account Number',
                         controller: _accountNumberController,
@@ -246,7 +266,6 @@ class _PaymentPageState extends State<PaymentPage> {
 
                       const SizedBox(height: 16),
 
-                      // Transaction Reference Number Field
                       _buildInputField(
                         label: 'Transaction Reference Number',
                         controller: _transactionRefController,
@@ -308,22 +327,62 @@ class _PaymentPageState extends State<PaymentPage> {
                             child: const Text('Cancel'),
                           ),
                           ElevatedButton(
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    'Payment of \$${widget.totalPrice.toStringAsFixed(2)} via $selectedBank successful!',
-                                  ),
-                                  backgroundColor: Colors.green,
-                                ),
-                              );
-                              Navigator.pushAndRemoveUntil(
+                            onPressed: () async {
+                              LoadingDialog.show(
                                 context,
-                                MaterialPageRoute(
-                                  builder: (context) => MainPage(),
-                                ),
-                                (route) => false,
+                                message: 'Processing Payment...',
                               );
+                              try {
+                                TicketService().createTicket(
+                                  userId: '${AuthService().currentUser?.uid}',
+                                  ticket: TicketModel(
+                                    bookingID: generateBookingId(),
+                                    date: widget.match.date,
+                                    team1: widget.match.team1,
+                                    location: widget.match.location,
+                                    qty: widget.qty,
+                                    status: "Pending",
+                                    team1VsTeam2: widget.match.team1VsTeam2,
+                                    team2: widget.match.team2,
+                                    ticketPrice: widget.ticketPrice,
+                                    ticketType: widget.ticketType,
+                                    time: widget.match.time,
+                                    paymentMethod: selectedBank,
+                                    accountName: _accountNameController.text,
+                                    accountNumber:
+                                        _accountNumberController.text,
+                                    referenceNumber:
+                                        _transactionRefController.text,
+                                  ),
+                                );
+                                Navigator.pop(context);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Payment of \$${widget.totalPrice.toStringAsFixed(2)} via $selectedBank successful!',
+                                    ),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+
+                                LoadingDialog.hide(context);
+                                Navigator.pushAndRemoveUntil(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => MainPage(),
+                                  ),
+                                  (route) => false,
+                                );
+                              } catch (e) {
+                                LoadingDialog.hide(context);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Payment failed: $e'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                                return;
+                              }
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF4CAF50),
@@ -422,84 +481,162 @@ class _PaymentPageState extends State<PaymentPage> {
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        onTap: () {
-          setState(() {
-            selectedBank = name;
-          });
-        },
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          decoration: BoxDecoration(
-            color: Colors.white,
+      child: Column(
+        children: [
+          InkWell(
+            onTap: () {
+              setState(() {
+                selectedBank = name;
+              });
+            },
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isSelected ? const Color(0xFF4CAF50) : Colors.transparent,
-              width: 2,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: backgroundColor,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Center(
-                  child: Text(
-                    name
-                        .split(' ')[0]
-                        .substring(
-                          0,
-                          name == 'ACLEDA Bank' ? 3 : name.split(' ')[0].length,
-                        ),
-                    style: TextStyle(
-                      color: textColor,
-                      fontSize: name == 'Wing Bank' ? 10 : 12,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-
-              Expanded(
-                child: Text(
-                  name,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
-                  ),
-                ),
-              ),
-
-              Container(
-                width: 24,
-                height: 24,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
                   color: isSelected
                       ? const Color(0xFF4CAF50)
-                      : Colors.grey.shade300,
+                      : Colors.transparent,
+                  width: 2,
                 ),
-                child: isSelected
-                    ? const Icon(Icons.check, color: Colors.white, size: 16)
-                    : null,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-            ],
+              child: Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: backgroundColor,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Center(
+                      child: Text(
+                        name
+                            .split(' ')[0]
+                            .substring(
+                              0,
+                              name == 'ACLEDA Bank'
+                                  ? 3
+                                  : name.split(' ')[0].length,
+                            ),
+                        style: TextStyle(
+                          color: textColor,
+                          fontSize: name == 'Wing Bank' ? 10 : 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+
+                  Expanded(
+                    child: Text(
+                      name,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ),
+
+                  Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: isSelected
+                          ? const Color(0xFF4CAF50)
+                          : Colors.grey.shade300,
+                    ),
+                    child: isSelected
+                        ? const Icon(Icons.check, color: Colors.white, size: 16)
+                        : null,
+                  ),
+                ],
+              ),
+            ),
           ),
-        ),
+
+          /// SHOW QR WHEN SELECTED
+          if (isSelected)
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(top: 8),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    name,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text("Account: ", style: TextStyle(fontSize: 14)),
+                      Text(
+                        "012 345 678",
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  name == "ABA Bank"
+                      ? Image(
+                          image: AssetImage("assets/qr/aba.png"),
+                          width: 250,
+                          height: 250,
+                        )
+                      : name == "ACLEDA Bank"
+                      ? Image(
+                          image: AssetImage("assets/qr/ac.png"),
+                          width: 250,
+                          height: 250,
+                        )
+                      : Image(
+                          image: AssetImage("assets/qr/wing.png"),
+                          width: 250,
+                          height: 250,
+                        ),
+                  const SizedBox(height: 12),
+
+                  const Text(
+                    "Scan to Pay",
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
+        ],
       ),
     );
   }

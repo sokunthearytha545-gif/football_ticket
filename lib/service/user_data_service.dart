@@ -4,26 +4,44 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class UserDataService {
-  Future<Map<String, dynamic>?> getUserData() async {
+  Stream<Map<String, dynamic>?> getUserDataStream() {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      return Stream.value(null);
+    }
+
+    return FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .snapshots()
+        .map((doc) => doc.data());
+  }
+
+  Future<void> updateUserData({
+    required String name,
+    required String phone,
+  }) async {
     try {
       final user = FirebaseAuth.instance.currentUser;
-
-      if (user == null) return null;
-
-      final doc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .get();
-
-      if (doc.exists) {
-        return doc.data();
-    } else {
-      log("User document not found");
-      return null;
-    }
+      if (user == null) return;
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).update(
+        {'name': name, 'phone': phone},
+      );
     } catch (e) {
-      log("Error getting user data: $e");
-      return null;
+      log("Error updating user data: $e");
+    }
+  }
+
+  Future<void> updateUserProfile({required String profile}) async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).update(
+        {'profile': profile},
+      );
+    } catch (e) {
+      log("Error updating user profile: $e");
     }
   }
 }

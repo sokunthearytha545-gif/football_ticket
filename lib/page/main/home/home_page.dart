@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:football_ticket/model/match_model.dart';
 import 'package:football_ticket/page/main/home/view_detail_page.dart';
+import 'package:football_ticket/service/match_service.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -10,41 +12,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  List<MatchModel> matches = [
-    MatchModel(
-      location: 'Stadium A',
-      date: '25 Jan 2026',
-      time: '7:30 PM',
-      ticketPrice: 15,
-      ticketVipPrice: 30,
-      availableTicket: 100,
-      team1: 'manchester',
-      team2: 'chelsea',
-      team1VsTeam2: 'Manchester vs Chelsea',
-    ),
-    MatchModel(
-      location: 'Stadium B',
-      date: '26 Jan 2026',
-      time: '8:00 PM',
-      ticketPrice: 10,
-      ticketVipPrice: 25,
-      availableTicket: 150,
-      team1: 'liverpool',
-      team2: 'arsenal',
-      team1VsTeam2: 'Liverpool vs Arsenal',
-    ),
-    MatchModel(
-      location: 'Stadium C',
-      date: '27 Jan 2026',
-      time: '9:00 PM',
-      ticketPrice: 20,
-      ticketVipPrice: 40,
-      availableTicket: 80,
-      team1: 'real',
-      team2: 'barcelona',
-      team1VsTeam2: 'Real Madrid vs Barcelona',
-    ),
-  ];
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -95,116 +62,120 @@ class _HomePageState extends State<HomePage> {
       ),
 
       body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      margin: const EdgeInsets.all(16),
-                      height: 180,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.3),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
+        child: StreamBuilder<List<MatchModel>>(
+          stream: MatchService().matchGet(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Skeletonizer(
+                enabled: true,
+                child: ListView.builder(
+                  itemCount: 7,
+                  itemBuilder: (context, index) {
+                    return _buildMatchCard(
+                      "assets/team/arsenal.png",
+                      "assets/team/chelsea.png",
+                      "Arsenal vs Chelsea",
+                      "2024-05-15 | 15:00",
+                      MatchModel(
+                        team1: "arsenal",
+                        team2: "chelsea",
+                        team1VsTeam2: "Arsenal vs Chelsea",
+                        date: "2024-05-15",
+                        time: "15:00",
+                        location: "Emirates Stadium",
+                        ticketPrice: 50,
+                        ticketVipPrice: 100,
+                        availableTicket: 100,
                       ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            Image.network(
-                              'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=800',
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  color: Colors.green[800],
-                                  child: const Center(
-                                    child: Icon(
-                                      Icons.sports_soccer,
-                                      size: 80,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                            Container(
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                  colors: [
-                                    Colors.transparent,
-                                    Colors.black.withOpacity(0.4),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const Positioned(
-                              bottom: 12,
-                              left: 0,
-                              right: 0,
-                              child: Center(
-                                child: Text(
-                                  'Football',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    shadows: [
-                                      Shadow(
-                                        color: Colors.black,
-                                        offset: Offset(1, 1),
-                                        blurRadius: 3,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    const Padding(
-                      padding: EdgeInsets.fromLTRB(16, 8, 16, 16),
-                      child: Text(
-                        'Upcoming Matches',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ),
-
-                    ListView.builder(
-                      itemBuilder: (context, index) {
-                        return _buildMatchCard(
-                          "assets/${matches[index].team1}.png",
-                          "assets/${matches[index].team2}.png",
-                          matches[index].team1VsTeam2,
-                          '${matches[index].date} | ${matches[index].time}',
-                        );
-                      },
-                      itemCount: matches.length,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                    ),
-                  ],
+                    );
+                  },
                 ),
-              ),
-            ),
-          ],
+              );
+            }
+
+            if (snapshot.hasError) {
+              return const Center(child: Text("Error loading matches"));
+            }
+
+            final matches = snapshot.data ?? [];
+
+            return ListView(
+              padding: const EdgeInsets.only(bottom: 20),
+              children: [
+                Container(
+                  margin: const EdgeInsets.all(16),
+                  height: 180,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black26,
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        Image.network(
+                          'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=800',
+                          fit: BoxFit.cover,
+                        ),
+                        Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.transparent,
+                                Colors.black.withOpacity(0.4),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const Positioned(
+                          bottom: 12,
+                          left: 0,
+                          right: 0,
+                          child: Center(
+                            child: Text(
+                              'Football',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(16, 8, 16, 16),
+                  child: Text(
+                    'Upcoming Matches',
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  ),
+                ),
+
+                ...matches.map(
+                  (match) => _buildMatchCard(
+                    "assets/team/${match.team1}.png",
+                    "assets/team/${match.team2}.png",
+                    match.team1VsTeam2,
+                    '${match.date} | ${match.time}',
+                    match,
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -215,6 +186,7 @@ class _HomePageState extends State<HomePage> {
     String team2,
     String matchTitle,
     String dateTime,
+    MatchModel match,
   ) {
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -379,8 +351,16 @@ class _HomePageState extends State<HomePage> {
                         context,
                         MaterialPageRoute(
                           builder: (context) => ViewDetailPage(
-                            match: matches.firstWhere(
-                              (m) => m.team1VsTeam2 == matchTitle,
+                            match: MatchModel(
+                              location: match.location,
+                              date: match.date,
+                              time: match.time,
+                              ticketPrice: match.ticketPrice,
+                              ticketVipPrice: match.ticketVipPrice,
+                              availableTicket: match.availableTicket,
+                              team1: match.team1,
+                              team2: match.team2,
+                              team1VsTeam2: match.team1VsTeam2,
                             ),
                           ),
                         ),

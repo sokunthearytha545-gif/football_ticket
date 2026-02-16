@@ -229,13 +229,16 @@ class _BuyTicketPageState extends State<BuyTicketPage> {
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => PaymentPage(
+                                    ticketType: selectedTicketType,
                                     dateTime:
                                         "${widget.match.date} | ${widget.match.time}",
                                     totalPrice: totalPrice,
                                     qty: ticketQuantity,
                                     ticketPrice:
                                         ticketPrices[selectedTicketType]!,
+                                        match: widget.match,
                                   ),
+
                                 ),
                               );
                             },

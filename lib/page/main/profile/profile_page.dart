@@ -1,7 +1,13 @@
+import 'dart:developer';
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:football_ticket/check_auth.dart';
+import 'package:football_ticket/page/helper/loading_dailog.dart';
 import 'package:football_ticket/service/auth_service.dart';
 import 'package:football_ticket/service/user_data_service.dart';
+import 'package:image_picker/image_picker.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -16,22 +22,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String? name;
   String? email;
   String? phone;
-
+  String? picture;
+  XFile? _selectedImage;
+  final ImagePicker _picker = ImagePicker();
   @override
   void initState() {
     super.initState();
-    loadUserData();
   }
 
-  Future<void> loadUserData() async {
-    final data = await UserDataService().getUserData();
-    if (data != null) {
-      setState(() {
-        name = data['name'] ?? 'No Name';
-        email = data['email'] ?? 'No Email';
-        phone = data['phone'] ?? 'No Phone';
-      });
+  String? _validateName(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Please enter your name';
     }
+    if (value.length < 2) {
+      return 'Name must be at least 2 characters';
+    }
+    return null;
+  }
+
+  String? _validatePhone(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Please enter your phone number';
+    }
+    final trimmedValue = value.replaceAll(RegExp(r'\s+|-'), '');
+
+    if (!RegExp(r'^\d+$').hasMatch(trimmedValue)) {
+      return 'Phone number must contain only digits';
+    }
+
+    if (trimmedValue.length < 8 || trimmedValue.length > 15) {
+      return 'Phone number must be between 8 and 15 digits';
+    }
+
+    return null;
   }
 
   @override
@@ -83,118 +106,128 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               child: Column(
                 children: [
-                  Stack(
-                    children: [
-                      Container(
-                        width: 100,
-                        height: 100,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              const Color(0xFF8B4513),
-                              const Color(0xFFA0522D),
+                  const SizedBox(height: 16),
+                  StreamBuilder<Map<String, dynamic>?>(
+                    stream: UserDataService().getUserDataStream(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const CircularProgressIndicator();
+                      }
+                      if (!snapshot.hasData || snapshot.data == null) {
+                        return const Text("No user data found");
+                      }
+                      final userData = snapshot.data!;
+                      name = userData['name'] ?? 'No Name';
+                      email = userData['email'] ?? 'No Email';
+                      phone = userData['phone'] ?? 'No Phone';
+                      _selectedImage = XFile(userData['profile'] ?? "");
+                      log("Selected image path: ${_selectedImage?.path}");
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Stack(
+                            children: [
+                              Container(
+                                width: 200,
+                                height: 200,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  gradient: const LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      Color(0xFF8B4513),
+                                      Color(0xFFA0522D),
+                                    ],
+                                  ),
+                                  image:
+                                      _selectedImage != null &&
+                                          _selectedImage!.path.isNotEmpty
+                                      ? DecorationImage(
+                                          image: kIsWeb
+                                              ? NetworkImage(
+                                                  _selectedImage!.path,
+                                                )
+                                              : FileImage(
+                                                      File(
+                                                        _selectedImage!.path,
+                                                      ),
+                                                    )
+                                                    as ImageProvider,
+                                          fit: BoxFit.cover,
+                                        )
+                                      : null,
+                                  border: Border.all(
+                                    color: Colors.white,
+                                    width: 4,
+                                  ),
+                                ),
+                                child:
+                                    _selectedImage != null &&
+                                        _selectedImage!.path.isNotEmpty
+                                    ? null
+                                    : const Icon(
+                                        Icons.person,
+                                        size: 100,
+                                        color: Colors.white,
+                                      ),
+                              ),
+                              Positioned(
+                                bottom: 10,
+                                right: 20,
+                                child: GestureDetector(
+                                  onTap: () => _showImageSourceDialog(),
+                                  child: Container(
+                                    width: 40,
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFFDB747),
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: Colors.white,
+                                        width: 2,
+                                      ),
+                                    ),
+                                    child: const Icon(
+                                      Icons.camera_alt,
+                                      size: 16,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
-                          border: Border.all(color: Colors.white, width: 4),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.2),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.person,
-                          size: 50,
-                          color: Colors.white,
-                        ),
-                      ),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: GestureDetector(
-                          onTap: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Change profile picture'),
-                              ),
-                            );
-                          },
-                          child: Container(
-                            width: 32,
-                            height: 32,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFDB747),
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white, width: 2),
-                            ),
-                            child: const Icon(
-                              Icons.camera_alt,
-                              size: 16,
-                              color: Colors.white,
+                          Text(
+                            userData['name'] ?? 'No Name',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
                             ),
                           ),
-                        ),
-                      ),
-                    ],
-                  ),
 
-                  const SizedBox(height: 16),
+                          const SizedBox(height: 4),
 
-                  Text(
-                    name ?? 'No Name',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                  ),
+                          Text(
+                            userData['email'] ?? 'No Email',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
 
-                  const SizedBox(height: 4),
-
-                  Text(
-                    email ?? 'No Email',
-                    style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 40),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _buildStatItem('12', 'Tickets'),
-                        Container(
-                          width: 1,
-                          height: 30,
-                          color: Colors.grey.shade300,
-                        ),
-                        _buildStatItem('8', 'Attended'),
-                        Container(
-                          width: 1,
-                          height: 30,
-                          color: Colors.grey.shade300,
-                        ),
-                        _buildStatItem('4', 'Upcoming'),
-                      ],
-                    ),
+                          Text(
+                            userData['phone'] ?? 'No Phone',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ],
               ),
@@ -220,37 +253,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               title: 'Booking History',
               onTap: () {},
             ),
-
-            const SizedBox(height: 20),
-
-            _buildSectionTitle('Preferences'),
-            _buildSwitchMenuItem(
-              icon: Icons.notifications_outlined,
-              title: 'Push Notifications',
-              value: notificationsEnabled,
-              onChanged: (value) {
-                setState(() {
-                  notificationsEnabled = value;
-                });
-              },
-            ),
-            _buildSwitchMenuItem(
-              icon: Icons.email_outlined,
-              title: 'Email Notifications',
-              value: emailNotifications,
-              onChanged: (value) {
-                setState(() {
-                  emailNotifications = value;
-                });
-              },
-            ),
-            _buildMenuItem(
-              icon: Icons.language,
-              title: 'Language',
-              subtitle: 'English',
-              onTap: () {},
-            ),
-
             const SizedBox(height: 20),
 
             _buildSectionTitle('Support'),
@@ -315,26 +317,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildStatItem(String value, String label) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF8B4513),
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-        ),
-      ],
     );
   }
 
@@ -409,109 +391,97 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildSwitchMenuItem({
-    required IconData icon,
-    required String title,
-    required bool value,
-    required ValueChanged<bool> onChanged,
-  }) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: SwitchListTile(
-        secondary: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: const Color(0xFF8B4513).withOpacity(0.1),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Icon(icon, color: const Color(0xFF8B4513), size: 22),
-        ),
-        title: Text(
-          title,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-          ),
-        ),
-        value: value,
-        activeColor: const Color(0xFF4CAF50),
-        onChanged: onChanged,
-      ),
-    );
-  }
-
   void _showEditProfileDialog(BuildContext context) {
-    final nameController = TextEditingController(text: name ?? 'No Name');
-    final emailController = TextEditingController(text: email ?? 'No Email');
-    final phoneController = TextEditingController(text: phone ?? 'No Phone');
+    final _formKey = GlobalKey<FormState>();
+
+    final nameController = TextEditingController(text: name?.trim() ?? '');
+    final phoneController = TextEditingController(text: phone?.trim() ?? '');
 
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Edit Profile'),
         content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Name',
-                  prefixIcon: Icon(Icons.person),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: nameController,
+                  validator: _validateName,
+                  textInputAction: TextInputAction.next,
+                  decoration: const InputDecoration(
+                    labelText: 'Name',
+                    prefixIcon: Icon(Icons.person),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: emailController,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  prefixIcon: Icon(Icons.email),
+
+                const SizedBox(height: 16),
+
+                TextFormField(
+                  controller: phoneController,
+                  validator: _validatePhone,
+                  keyboardType: TextInputType.phone,
+                  textInputAction: TextInputAction.done,
+                  decoration: const InputDecoration(
+                    labelText: 'Phone',
+                    prefixIcon: Icon(Icons.phone),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: phoneController,
-                decoration: const InputDecoration(
-                  labelText: 'Phone',
-                  prefixIcon: Icon(Icons.phone),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () {
+              Navigator.pop(context);
+            },
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Profile updated successfully!'),
-                  backgroundColor: Colors.green,
-                ),
-              );
-            },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF8B4513),
             ),
-            child: const Text('Save'),
+            onPressed: () async {
+              if (_formKey.currentState!.validate()) {
+                LoadingDialog.show(context, message: 'Updating profile...');
+                final updatedName = nameController.text.trim();
+
+                final updatedPhone = phoneController.text
+                    .replaceAll(RegExp(r'\s+|-'), '')
+                    .trim();
+
+                try {
+                  await UserDataService().updateUserData(
+                    name: updatedName,
+                    phone: updatedPhone,
+                  );
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Profile updated successfully!'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                  LoadingDialog.hide(context);
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Failed to update profile. Please try again.',
+                      ),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                  LoadingDialog.hide(context);
+                }
+              }
+            },
+            child: const Text('Save', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -589,6 +559,54 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    final XFile? pickedFile = await _picker.pickImage(
+      source: source,
+      imageQuality: 70,
+    );
+
+    if (pickedFile != null) {
+      setState(() {
+        _selectedImage = pickedFile;
+        log("Selected image path: ${pickedFile.path}");
+      });
+      await UserDataService().updateUserProfile(profile: pickedFile.path);
+    }
+  }
+
+  void _showImageSourceDialog() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Wrap(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Take Photo'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImage(ImageSource.camera);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Choose from Gallery'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImage(ImageSource.gallery);
+                },
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

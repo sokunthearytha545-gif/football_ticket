@@ -1,4 +1,9 @@
+import 'dart:developer';
+
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:football_ticket/model/ticket_model.dart';
+import 'package:football_ticket/service/tickets_service.dart';
 
 class MyTicketScreen extends StatefulWidget {
   const MyTicketScreen({super.key});
@@ -8,42 +13,7 @@ class MyTicketScreen extends StatefulWidget {
 }
 
 class _MyTicketScreenState extends State<MyTicketScreen> {
-  final List<Map<String, dynamic>> tickets = [
-    {
-      'matchTitle': 'Manchester vs Chelsea',
-      'date': '25 Jan 2026',
-      'time': '7:30 PM',
-      'stadium': 'Olympic Stadium',
-      'ticketType': 'VIP',
-      'quantity': 2,
-      'totalPrice': 60.00,
-      'bookingId': 'TK001234',
-      'status': 'Confirmed',
-    },
-    {
-      'matchTitle': 'Arsenal vs Liverpool',
-      'date': '15 Feb 2026',
-      'time': '8:00 PM',
-      'stadium': 'Emirates Stadium',
-      'ticketType': 'Regular',
-      'quantity': 3,
-      'totalPrice': 30.00,
-      'bookingId': 'TK001235',
-      'status': 'Confirmed',
-    },
-    {
-      'matchTitle': 'Barcelona vs Real Madrid',
-      'date': '10 Mar 2026',
-      'time': '9:00 PM',
-      'stadium': 'Camp Nou',
-      'ticketType': 'VIP',
-      'quantity': 1,
-      'totalPrice': 30.00,
-      'bookingId': 'TK001236',
-      'status': 'Pending',
-    },
-  ];
-
+  var currentUser = FirebaseAuth.instance.currentUser!;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -75,49 +45,73 @@ class _MyTicketScreenState extends State<MyTicketScreen> {
           ),
         ],
       ),
-      body: tickets.isEmpty
-          ? _buildEmptyState()
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: tickets.length,
-              itemBuilder: (context, index) {
-                return _buildTicketCard(tickets[index]);
-              },
-            ),
-    );
-  }
 
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.confirmation_number_outlined,
-            size: 100,
-            color: Colors.grey.shade400,
-          ),
-          const SizedBox(height: 20),
-          Text(
-            'No Tickets Yet',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey.shade600,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Your purchased tickets will appear here',
-            style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
-          ),
-        ],
+      // body: tickets.isEmpty
+      //     ? _buildEmptyState()
+      //     : ListView.builder(
+      //         padding: const EdgeInsets.all(16),
+      //         itemCount: tickets.length,
+      //         itemBuilder: (context, index) {
+      //           return _buildTicketCard(tickets[index]);
+      //         },
+      //       ),
+      body: StreamBuilder<List<TicketModel>>(
+        stream: TicketService().ticketStream(currentUser.uid),
+        builder: (context, snapshot) {
+          log(currentUser.uid);
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text("No tickets found"));
+          }
+
+          final tickets = snapshot.data!;
+
+          return ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: tickets.length,
+            itemBuilder: (context, index) {
+              return _buildTicketCard(tickets[index]);
+            },
+          );
+        },
       ),
     );
   }
 
-  Widget _buildTicketCard(Map<String, dynamic> ticket) {
-    final bool isConfirmed = ticket['status'] == 'Confirmed';
+  // Widget _buildEmptyState() {
+  //   return Center(
+  //     child: Column(
+  //       mainAxisAlignment: MainAxisAlignment.center,
+  //       children: [
+  //         Icon(
+  //           Icons.confirmation_number_outlined,
+  //           size: 100,
+  //           color: Colors.grey.shade400,
+  //         ),
+  //         const SizedBox(height: 20),
+  //         Text(
+  //           'No Tickets Yet',
+  //           style: TextStyle(
+  //             fontSize: 20,
+  //             fontWeight: FontWeight.bold,
+  //             color: Colors.grey.shade600,
+  //           ),
+  //         ),
+  //         const SizedBox(height: 8),
+  //         Text(
+  //           'Your purchased tickets will appear here',
+  //           style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
+
+  Widget _buildTicketCard(TicketModel ticket) {
+    final bool isConfirmed = ticket.status == 'Confirmed';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -155,18 +149,16 @@ class _MyTicketScreenState extends State<MyTicketScreen> {
                   child: Column(
                     children: [
                       Container(
-                        width: 50,
-                        height: 50,
+                        width: 70,
+                        height: 70,
                         decoration: BoxDecoration(
-                          color: Colors.red.shade700,
                           shape: BoxShape.circle,
                           border: Border.all(color: Colors.white, width: 2),
-                        ),
-                        child: const Center(
-                          child: Icon(
-                            Icons.shield,
-                            color: Colors.white,
-                            size: 24,
+                          image: DecorationImage(
+                            image: AssetImage(
+                              'assets/team/${ticket.team1}.png',
+                            ),
+                            fit: BoxFit.cover,
                           ),
                         ),
                       ),
@@ -187,18 +179,16 @@ class _MyTicketScreenState extends State<MyTicketScreen> {
                   child: Column(
                     children: [
                       Container(
-                        width: 50,
-                        height: 50,
+                        width: 70,
+                        height: 70,
                         decoration: BoxDecoration(
-                          color: Colors.blue.shade700,
                           shape: BoxShape.circle,
                           border: Border.all(color: Colors.white, width: 2),
-                        ),
-                        child: const Center(
-                          child: Icon(
-                            Icons.shield,
-                            color: Colors.white,
-                            size: 24,
+                          image: DecorationImage(
+                            image: AssetImage(
+                              'assets/team/${ticket.team2}.png',
+                            ),
+                            fit: BoxFit.cover,
                           ),
                         ),
                       ),
@@ -219,7 +209,7 @@ class _MyTicketScreenState extends State<MyTicketScreen> {
                   children: [
                     Expanded(
                       child: Text(
-                        ticket['matchTitle'],
+                        ticket.team1VsTeam2,
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -239,7 +229,7 @@ class _MyTicketScreenState extends State<MyTicketScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        ticket['status'],
+                        ticket.status,
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 12,
@@ -255,35 +245,36 @@ class _MyTicketScreenState extends State<MyTicketScreen> {
                 _buildInfoRow(
                   icon: Icons.qr_code,
                   label: 'Booking ID',
-                  value: ticket['bookingId'],
+                  value: ticket.bookingID,
                 ),
                 const SizedBox(height: 12),
 
                 _buildInfoRow(
                   icon: Icons.location_on,
                   label: 'Stadium',
-                  value: ticket['stadium'],
+                  value: ticket.location,
                 ),
                 const SizedBox(height: 12),
 
                 _buildInfoRow(
                   icon: Icons.calendar_today,
                   label: 'Date & Time',
-                  value: '${ticket['date']} | ${ticket['time']}',
+                  value: '${ticket.date} | ${ticket.time}',
                 ),
                 const SizedBox(height: 12),
 
                 _buildInfoRow(
                   icon: Icons.confirmation_number,
                   label: 'Ticket Type',
-                  value: '${ticket['ticketType']} × ${ticket['quantity']}',
+                  value: '${ticket.ticketType} × ${ticket.qty}',
                 ),
                 const SizedBox(height: 12),
 
                 _buildInfoRow(
                   icon: Icons.payment,
                   label: 'Total Price',
-                  value: '\$${ticket['totalPrice'].toStringAsFixed(2)}',
+                  value:
+                      '\$${(ticket.ticketPrice * ticket.qty).toStringAsFixed(2)}',
                   valueColor: const Color(0xFF4CAF50),
                 ),
 
@@ -374,7 +365,7 @@ class _MyTicketScreenState extends State<MyTicketScreen> {
     );
   }
 
-  void _showTicketQRCode(BuildContext context, Map<String, dynamic> ticket) {
+  void _showTicketQRCode(BuildContext context, TicketModel ticket) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -402,7 +393,7 @@ class _MyTicketScreenState extends State<MyTicketScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      ticket['bookingId'],
+                      ticket.bookingID,
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.grey.shade600,
@@ -431,10 +422,10 @@ class _MyTicketScreenState extends State<MyTicketScreen> {
     );
   }
 
-  void _downloadTicket(BuildContext context, Map<String, dynamic> ticket) {
+  void _downloadTicket(BuildContext context, TicketModel ticket) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Downloading ticket ${ticket['bookingId']}...'),
+        content: Text('Downloading ticket ${ticket.bookingID}...'),
         backgroundColor: const Color(0xFF4CAF50),
         behavior: SnackBarBehavior.floating,
       ),

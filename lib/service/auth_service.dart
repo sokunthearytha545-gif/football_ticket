@@ -12,6 +12,7 @@ final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   required String email,
   required String phone,
   required String password,
+  String picture='',
 }) async {
   try {
     final result = await _auth.createUserWithEmailAndPassword(
@@ -25,6 +26,7 @@ final FirebaseFirestore _firestore = FirebaseFirestore.instance;
         'name': name,
         'email': email,
         'phone': phone,
+        'picture': picture,
         'created_at': FieldValue.serverTimestamp(),
       });
     }
@@ -39,7 +41,6 @@ final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   }
 
 }
-
 
   Future<User?> login({
     required String email,
@@ -60,9 +61,6 @@ final FirebaseFirestore _firestore = FirebaseFirestore.instance;
     await _auth.signOut();
   }
 
-  // Current user
   User? get currentUser => _auth.currentUser;
-
-  // Auth state changes
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 }
